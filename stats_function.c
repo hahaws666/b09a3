@@ -162,7 +162,6 @@ most of the other things to print
 */
 void printbasicsysteminfo(){
         struct utsname systemInfo;
-        struct sysinfo sysInfo;
 
     if (uname(&systemInfo) != -1) {
         printf("### System Information ###\n");

@@ -84,9 +84,6 @@ int store_get_cpu_pid(int k) {
     
 }
 
-void hand(int sig){
-    exit(0);
-}
 
 void ctrl_c_handler(int sig) {
     int child_pid=store_get_mem_pid(-1);
@@ -105,8 +102,8 @@ void ctrl_c_handler(int sig) {
         //printf("\nTerminating child process...\n");
         // Send SIGTERM signal to the child process
         kill(child_pid, SIGTERM);
-        kill(child_pid2,SIGTERM)==-1;
-        kill(child_pid3,SIGTERM)==-1;
+        kill(child_pid2,SIGTERM);
+        kill(child_pid3,SIGTERM);
         
         exit(0);
     }
@@ -134,10 +131,8 @@ int main(int argc, char ** argv) {
     // receiving the command line
     int samples =10;
     int delay =1;
-    char ** res;
     int samplefound=0;
     int delayfound=0;
-    int printgrapg=0;
     int printsys=0;
     int printuser=0, printgraph=0,printsequential=0;// the init status of what to print
 
@@ -151,8 +146,8 @@ int main(int argc, char ** argv) {
         int i=1;
         while(i<argc) {
         char *stringPart = strtok(argv[i], "=");
-        int intPart;
-        char *token; 
+        //int intPart;
+        // char *token; 
         if (strcmp(stringPart, "--system") == 0) {
             printf("This is system.\n");
             printsys=1;
@@ -250,7 +245,7 @@ int main(int argc, char ** argv) {
         exit(EXIT_FAILURE);
     }
     user_child_pid = fork();
-    int rubbish1= store_get_user_pid(user_child_pid);
+    store_get_user_pid(user_child_pid);
 
     if (user_child_pid == -1) {
         perror("fork");
@@ -267,7 +262,7 @@ int main(int argc, char ** argv) {
         exit(0);
     }
     mem_child_pid = fork();
-    int rubbish2= store_get_mem_pid(mem_child_pid);
+    store_get_mem_pid(mem_child_pid);
     if (mem_child_pid ==-1)
     {
         perror("fork");
@@ -275,7 +270,6 @@ int main(int argc, char ** argv) {
     }
     if (mem_child_pid ==0)
     {
-        signal(SIGTERM,hand);
         close(mem_pipe[0]); // Close unused read   
         char * mem_info = get_memory_info();
         write(mem_pipe[1], mem_info,strlen(mem_info) + 1); // Include null terminator
@@ -284,7 +278,7 @@ int main(int argc, char ** argv) {
     }
 
     cpu_child_pid = fork();
-    int rubbish3= store_get_cpu_pid(cpu_child_pid);
+    store_get_cpu_pid(cpu_child_pid);
     if (cpu_child_pid ==-1)
     {
         perror("fork");
@@ -305,6 +299,7 @@ int main(int argc, char ** argv) {
     // exit(1);
     // }
     signal(SIGINT, ctrl_c_handler);
+    signal(SIGTSTP, ctrl_z_handler);
     waitpid(user_child_pid,NULL,0);        // Wait for the child process to exit
     waitpid(mem_child_pid,NULL,0); // wait for the child process of memory
     waitpid(cpu_child_pid,NULL,0); //
@@ -320,7 +315,12 @@ int main(int argc, char ** argv) {
     ssize_t cpu_size = read(cpu_pipe[0],cpu_buf,sizeof(cpu_buf));
 
     if (user_size > 0 && mem_size > 0 && cpu_size > 0) {
-
+        if (printsys +printuser ==0)
+        {
+            printsys=1;
+            printuser=1;
+        }
+        
         if (printsequential==0)
         {
             printf("\033[H\033[J"); // This clears the screen (Unix-based systems)
@@ -333,6 +333,7 @@ int main(int argc, char ** argv) {
         {
             if (printgraph==1)
             {
+                printf("graph\n");
                 addStringToList(memory_list,mem_buf);
                 dealing_memory_graph(memory_list);
                 //dealing with the cpu imformation
