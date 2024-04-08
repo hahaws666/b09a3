@@ -108,13 +108,7 @@ void ctrl_c_handler(int sig) {
         exit(0);
     }
     }
-    else if (c=='N' || c=='n' ) {
-        printf("continuing");
-    }
-    else
-    {
-        printf("wrong input");
-    }
+
 }
 
 void ctrl_z_handler(int sig){
